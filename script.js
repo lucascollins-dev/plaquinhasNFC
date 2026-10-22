@@ -1,6 +1,6 @@
 // Endereço base: a própria página, seguida de ?c=
 // Ex.: http://127.0.0.1:5500/index.html?c=
-const BASE_URL = window.location.origin + window.location.pathname + "?c=";
+const BASE_URL = "https://plaquinhasnfc-ashy.vercel.app/index.html?c=";
 
 async function carregarDados() {
   const resposta = await fetch("dados.json");

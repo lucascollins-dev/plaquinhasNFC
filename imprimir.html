@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Imprimir plaquinhas</title>
+  <style>
+    @page { size: 100mm 150mm; margin: 0; }
+    body { margin: 0; font-family: system-ui, sans-serif; }
+
+    .controles { padding: 16px; }
+    .controles select, .controles button { font-size: 16px; padding: 6px 10px; margin-right: 8px; }
+
+    .plaquinha {
+      position: relative;
+      width: 100mm;
+      height: 150mm;
+      overflow: hidden;
+      break-after: page;
+      page-break-after: always;
+    }
+    .plaquinha:last-child { break-after: auto; page-break-after: auto; }
+
+    .plaquinha .fundo {
+      position: absolute;
+      left: -3mm;
+      top: -3mm;
+      width: 106mm;
+      height: 156mm;
+    }
+    .plaquinha .qr {
+      position: absolute;
+      width: 26mm;
+      height: 26mm;
+    }
+
+    @media print {
+      .controles { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="controles">
+    <select id="fundo">
+      <option value="fundo-google.png">Google</option>
+      <option value="fundo-instagram.png">Instagram</option>
+    </select>
+    <button onclick="window.print()">Imprimir</button>
+    <p>Cada plaquinha sai em uma página de 100 × 150 mm.</p>
+  </div>
+
+  <div id="paginas"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script>
+    const BASE_URL = "https://plaquinhasnfc-ashy.vercel.app/index.html?c=";
+    const TAMANHO_QR_MM = 26;
+
+    // Posição do canto superior esquerdo do QR, em mm, medida nas artes
+    const POSICAO = {
+      "fundo-google.png":    { left: 60.45, top: 73.96 },
+      "fundo-instagram.png": { left: 60.45, top: 76.93 }
+    };
+
+    async function montar() {
+      const dados = await (await fetch("dados.json")).json();
+      const fundo = document.getElementById("fundo").value;
+      const pos = POSICAO[fundo];
+      let html = "";
+
+      for (const item of dados) {
+        const imagem = await QRCode.toDataURL(BASE_URL + item.uniqueLink, {
+          width: 800,
+          margin: 1,
+          errorCorrectionLevel: "M"
+        });
+
+        html += `
+          <div class="plaquinha">
+            <img class="fundo" src="${fundo}" alt="">
+            <img class="qr" src="${imagem}" alt="QR ${item.uniqueLink}"
+                 style="left:${pos.left}mm; top:${pos.top}mm;">
+          </div>`;
+      }
+
+      document.getElementById("paginas").innerHTML = html;
+    }
+
+    document.getElementById("fundo").addEventListener("change", montar);
+    montar();
+  </script>
+</body>
+</html>
