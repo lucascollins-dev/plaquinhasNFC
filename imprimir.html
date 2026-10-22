@@ -50,10 +50,9 @@
 
   <div id="paginas"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     const BASE_URL = "https://plaquinhasnfc-ashy.vercel.app/index.html?c=";
-    const TAMANHO_QR_MM = 26;
 
     // Posição do canto superior esquerdo do QR, em mm, medida nas artes
     const POSICAO = {
@@ -61,18 +60,30 @@
       "fundo-instagram.png": { left: 60.45, top: 76.93 }
     };
 
+    function gerarQR(texto) {
+      const temp = document.createElement("div");
+      new QRCode(temp, {
+        text: texto,
+        width: 800,
+        height: 800,
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      return temp.querySelector("canvas").toDataURL("image/png");
+    }
+
     async function montar() {
+      if (typeof QRCode === "undefined") {
+        alert("A biblioteca do QR não carregou. Atualize a página com Ctrl+F5.");
+        return;
+      }
+
       const dados = await (await fetch("dados.json")).json();
       const fundo = document.getElementById("fundo").value;
       const pos = POSICAO[fundo];
       let html = "";
 
       for (const item of dados) {
-        const imagem = await QRCode.toDataURL(BASE_URL + item.uniqueLink, {
-          width: 800,
-          margin: 1,
-          errorCorrectionLevel: "M"
-        });
+        const imagem = gerarQR(BASE_URL + item.uniqueLink);
 
         html += `
           <div class="plaquinha">
