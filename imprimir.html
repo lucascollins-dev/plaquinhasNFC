@@ -4,22 +4,32 @@
   <meta charset="UTF-8">
   <title>Imprimir plaquinhas</title>
   <style>
-    @page { size: 100mm 150mm; margin: 0; }
+    @page { size: A4 landscape; margin: 0; }
     body { margin: 0; font-family: system-ui, sans-serif; }
 
     .controles { padding: 16px; }
     .controles select, .controles button { font-size: 16px; padding: 6px 10px; margin-right: 8px; }
 
-    .plaquinha {
-      position: relative;
-      width: 100mm;
-      height: 150mm;
+    .folha {
+      width: 297mm;
+      height: 210mm;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10mm;
       overflow: hidden;
       break-after: page;
       page-break-after: always;
     }
-    .plaquinha:last-child { break-after: auto; page-break-after: auto; }
+    .folha:last-child { break-after: auto; page-break-after: auto; }
 
+    .plaquinha {
+      position: relative;
+      flex: 0 0 100mm;
+      width: 100mm;
+      height: 150mm;
+      overflow: hidden;
+    }
     .plaquinha .fundo {
       position: absolute;
       left: -3mm;
@@ -41,11 +51,12 @@
 <body>
   <div class="controles">
     <select id="fundo">
-      <option value="fundo-google.png">Google</option>
-      <option value="fundo-instagram.png">Instagram</option>
+      <option value="alternar">Alternar (Google + Instagram)</option>
+      <option value="google">Só Google</option>
+      <option value="instagram">Só Instagram</option>
     </select>
     <button onclick="window.print()">Imprimir</button>
-    <p>Cada plaquinha sai em uma página de 100 × 150 mm.</p>
+    <p>Duas plaquinhas por folha A4 paisagem, cada uma de 100 × 150 mm.</p>
   </div>
 
   <div id="paginas"></div>
@@ -53,6 +64,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
     const BASE_URL = "https://plaquinhasnfc-ashy.vercel.app/index.html?c=";
+
+    const FUNDOS = {
+      google: "fundo-google.png",
+      instagram: "fundo-instagram.png"
+    };
 
     // Posição do canto superior esquerdo do QR, em mm, medida nas artes
     const POSICAO = {
@@ -71,6 +87,24 @@
       return temp.querySelector("canvas").toDataURL("image/png");
     }
 
+    function fundoPara(modo, indice) {
+      if (modo === "alternar") {
+        return indice % 2 === 0 ? FUNDOS.google : FUNDOS.instagram;
+      }
+      return FUNDOS[modo];
+    }
+
+    function plaquinhaHTML(item, fundo) {
+      const pos = POSICAO[fundo];
+      const imagem = gerarQR(BASE_URL + item.uniqueLink);
+      return `
+        <div class="plaquinha">
+          <img class="fundo" src="${fundo}" alt="">
+          <img class="qr" src="${imagem}" alt="QR ${item.uniqueLink}"
+               style="left:${pos.left}mm; top:${pos.top}mm;">
+        </div>`;
+    }
+
     async function montar() {
       if (typeof QRCode === "undefined") {
         alert("A biblioteca do QR não carregou. Atualize a página com Ctrl+F5.");
@@ -78,19 +112,16 @@
       }
 
       const dados = await (await fetch("dados.json")).json();
-      const fundo = document.getElementById("fundo").value;
-      const pos = POSICAO[fundo];
+      const modo = document.getElementById("fundo").value;
       let html = "";
 
-      for (const item of dados) {
-        const imagem = gerarQR(BASE_URL + item.uniqueLink);
-
-        html += `
-          <div class="plaquinha">
-            <img class="fundo" src="${fundo}" alt="">
-            <img class="qr" src="${imagem}" alt="QR ${item.uniqueLink}"
-                 style="left:${pos.left}mm; top:${pos.top}mm;">
-          </div>`;
+      // Duas plaquinhas por folha: índices 0-1, 2-3, 4-5...
+      for (let i = 0; i < dados.length; i += 2) {
+        const esquerda = plaquinhaHTML(dados[i], fundoPara(modo, i));
+        const direita = dados[i + 1]
+          ? plaquinhaHTML(dados[i + 1], fundoPara(modo, i + 1))
+          : "";
+        html += `<div class="folha">${esquerda}${direita}</div>`;
       }
 
       document.getElementById("paginas").innerHTML = html;
