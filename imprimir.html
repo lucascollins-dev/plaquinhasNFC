@@ -10,6 +10,18 @@
     .controles { padding: 16px; }
     .controles select, .controles button { font-size: 16px; padding: 6px 10px; margin-right: 8px; }
 
+    .voltar {
+      display: inline-block;
+      margin: 12px 0 0 16px;
+      font-size: 14px;
+      color: #444;
+      text-decoration: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 12px;
+    }
+    .voltar:hover { background: #f2f2f2; }
+
     .folha {
       width: 297mm;
       height: 210mm;
@@ -58,11 +70,13 @@
     .codigo--tela { bottom: 4mm; left: 4mm; font-family: monospace; }
 
     @media print {
-      .controles, .store--name, .codigo--tela { display: none !important; }
+      .controles, .voltar, .store--name, .codigo--tela { display: none !important; }
     }
   </style>
 </head>
 <body>
+  <a class="voltar" href="painel.html">← Voltar ao painel</a>
+
   <div class="controles">
     <select id="fundo">
       <option value="alternar">Alternar (Google + Instagram)</option>
