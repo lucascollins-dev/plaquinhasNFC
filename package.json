@@ -1,8 +1,6 @@
 {
-  "dependencies": {
-    "shortid": "^2.2.17"
-  },
-  "scripts": {
-    "dev": "node --watch index.js"
-  }
+  "name": "plaquinhas-nfc",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Plaquinhas NFC e QR Code - Lucas Collins Soluções Digitais"
 }
