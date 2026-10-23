@@ -100,8 +100,8 @@
 
     // Posição do canto superior esquerdo do QR, em mm, medida nas artes
     const POSICAO = {
-      "fundo-google.png":    { left: 60.45, top: 73.96 },
-      "fundo-instagram.png": { left: 60.45, top: 76.93 }
+      "fundo-google.png":    { left: 61.0, top: 75.2 },
+      "fundo-instagram.png": { left: 61.0, top: 78.2 }
     };
 
     let senha = null;
@@ -143,7 +143,7 @@
           <span class="codigo--tela">${escapar(item.uniqueLink)}</span>
           <img class="fundo" src="${fundo}" alt="">
           <img class="qr" src="${imagem}" alt="QR ${escapar(item.uniqueLink)}"
-               style="left:${pos.left}mm; top:${pos.top}mm;">
+               style="left:${pos.left}mm; top:${pos.top}mm; width:25mm; height:25mm;">
         </div>`;
     }
 
