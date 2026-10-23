@@ -1,14 +1,27 @@
 module.exports = async function handler(req, res) {
+  const url = process.env.SUPABASE_URL;
   const chave = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const url = `${process.env.SUPABASE_URL}/rest/v1/plaquinhas?select=unique_link&order=id`;
-  const resposta = await fetch(url, {
-    headers: { apikey: chave, Authorization: `Bearer ${chave}` }
-  });
 
-  if (!resposta.ok) {
-    return res.status(500).json({ erro: "Erro ao buscar códigos" });
+  if (!url || !chave) {
+    return res.status(500).json({
+      erro: "Variável de ambiente ausente",
+      supabaseUrlConfigurada: Boolean(url),
+      chaveServiceRoleConfigurada: Boolean(chave)
+    });
   }
 
-  const linhas = await resposta.json();
-  return res.status(200).json(linhas.map((l) => ({ uniqueLink: l.unique_link })));
+  try {
+    const resposta = await fetch(`${url}/rest/v1/plaquinhas?select=unique_link&order=id`, {
+      headers: { apikey: chave, Authorization: `Bearer ${chave}` }
+    });
+
+    if (!resposta.ok) {
+      return res.status(500).json({ erro: "Supabase respondeu com erro", status: resposta.status });
+    }
+
+    const linhas = await resposta.json();
+    return res.status(200).json(linhas.map((l) => ({ uniqueLink: l.unique_link })));
+  } catch (erro) {
+    return res.status(500).json({ erro: "Falha ao conectar ao Supabase", detalhe: String(erro) });
+  }
 };
