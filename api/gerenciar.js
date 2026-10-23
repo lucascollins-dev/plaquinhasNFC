@@ -6,6 +6,9 @@ module.exports = async function handler(req, res) {
 
   const url = process.env.SUPABASE_URL;
   const chave = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !chave) {
+    return res.status(500).json({ erro: "Configuração incompleta" });
+  }
   const headers = {
     apikey: chave,
     Authorization: `Bearer ${chave}`,

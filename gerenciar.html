@@ -47,12 +47,22 @@
     }
 
     async function api(metodo, corpo) {
-      const r = await fetch("/api/gerenciar", {
-        method: metodo,
-        headers: { "Content-Type": "application/json", "x-senha": senha },
-        body: corpo ? JSON.stringify(corpo) : undefined
-      });
-      return { ok: r.ok, dados: await r.json() };
+      try {
+        const r = await fetch("/api/gerenciar", {
+          method: metodo,
+          headers: { "Content-Type": "application/json", "x-senha": senha },
+          body: corpo ? JSON.stringify(corpo) : undefined
+        });
+        let dados;
+        try {
+          dados = await r.json();
+        } catch {
+          dados = { erro: "Resposta inválida do servidor." };
+        }
+        return { ok: r.ok, dados };
+      } catch {
+        return { ok: false, dados: { erro: "Falha de conexão. Tente novamente." } };
+      }
     }
 
     async function carregar() {
@@ -63,9 +73,10 @@
       }
 
       const r = await api("GET");
-      if (!r.ok) {
-        senha = null;
-        document.getElementById("resumo").textContent = r.dados.erro;
+      if (!r.ok || !Array.isArray(r.dados)) {
+        if (r.dados && /senha/i.test(r.dados.erro || "")) senha = null;
+        document.getElementById("resumo").textContent =
+          (r.dados && r.dados.erro) || "Erro ao carregar.";
         return;
       }
       dados = r.dados;

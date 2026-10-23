@@ -51,8 +51,8 @@
     }
     .plaquinha .qr {
       position: absolute;
-      width: 26mm;
-      height: 26mm;
+      width: 27mm;
+      height: 27mm;
     }
 
     /* Só aparecem na tela, nunca na impressão */
@@ -98,13 +98,14 @@
       instagram: "fundo-instagram.png"
     };
 
-    // Posição do canto superior esquerdo do QR, em mm, medida nas artes
+    // Área do QR medida nas artes (mm, relativo à plaquinha de 100 x 150)
     const POSICAO = {
-      "fundo-google.png":    { left: 40.46, top: 84.44 },
-      "fundo-instagram.png": { left: 40.46, top: 84.78 }
+      "fundo-google.png":    { left: 59.49, top: 71.26, size: 27 },
+      "fundo-instagram.png": { left: 59.45, top: 72.15, size: 27 }
     };
 
     let senha = null;
+    let dadosCache = null;
 
     function escapar(texto) {
       return String(texto).replace(/[&<>"']/g, (c) => ({
@@ -143,7 +144,7 @@
           <span class="codigo--tela">${escapar(item.uniqueLink)}</span>
           <img class="fundo" src="${fundo}" alt="">
           <img class="qr" src="${imagem}" alt="QR ${escapar(item.uniqueLink)}"
-               style="left:${pos.left}mm; top:${pos.top}mm; width:25mm; height:25mm;">
+               style="left:${pos.left}mm; top:${pos.top}mm; width:${pos.size}mm; height:${pos.size}mm;">
         </div>`;
     }
 
@@ -152,28 +153,10 @@
         `<p style="padding:16px;color:#b00">${escapar(texto)}</p>`;
     }
 
-    async function montar() {
-      if (typeof QRCode === "undefined") {
-        alert("A biblioteca do QR não carregou. Atualize a página com Ctrl+F5.");
-        return;
-      }
-
-      if (!senha) {
-        senha = prompt("Senha de administrador:");
-        if (!senha) {
-          mostrarMensagem("Digite a senha para carregar as plaquinhas.");
-          return;
-        }
-      }
-
-      const resposta = await fetch("/api/codigos", {
-        headers: { "x-senha": senha }
-      });
-      const dados = await resposta.json();
-
-      if (!Array.isArray(dados)) {
-        senha = null;
-        mostrarMensagem("Senha incorreta ou erro ao carregar. Atualize a página e tente de novo.");
+    function renderizar(dados) {
+      if (!dados.length) {
+        document.getElementById("paginas").innerHTML =
+          `<p style="padding:16px">Nenhuma plaquinha cadastrada ainda.</p>`;
         return;
       }
 
@@ -190,6 +173,44 @@
       }
 
       document.getElementById("paginas").innerHTML = html;
+    }
+
+    async function montar() {
+      if (typeof QRCode === "undefined") {
+        alert("A biblioteca do QR não carregou. Atualize a página com Ctrl+F5.");
+        return;
+      }
+
+      if (dadosCache) {
+        renderizar(dadosCache);
+        return;
+      }
+
+      if (!senha) {
+        senha = prompt("Senha de administrador:");
+        if (!senha) {
+          mostrarMensagem("Digite a senha para carregar as plaquinhas.");
+          return;
+        }
+      }
+
+      try {
+        const resposta = await fetch("/api/codigos", {
+          headers: { "x-senha": senha }
+        });
+        const dados = await resposta.json();
+
+        if (!Array.isArray(dados)) {
+          senha = null;
+          mostrarMensagem("Senha incorreta ou erro ao carregar. Atualize a página e tente de novo.");
+          return;
+        }
+
+        dadosCache = dados;
+        renderizar(dados);
+      } catch (erro) {
+        mostrarMensagem("Não foi possível carregar as plaquinhas. Verifique a conexão e tente novamente.");
+      }
     }
 
     document.getElementById("fundo").addEventListener("change", montar);

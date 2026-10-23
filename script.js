@@ -4,9 +4,9 @@ const codigo = new URLSearchParams(window.location.search).get("c");
 async function redirecionar() {
   try {
     const resposta = await fetch(`/api/resolver?c=${encodeURIComponent(codigo)}`);
-    const dados = await resposta.json();
+    const dados = await resposta.json().catch(() => ({}));
 
-    if (dados.destino) {
+    if (resposta.ok && dados.destino) {
       window.location.replace(dados.destino);
     } else {
       mensagem.textContent = "Link indisponível no momento.";

@@ -16,8 +16,13 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ erro: "Link inválido. Use um link https do Google ou do Instagram." });
   }
 
+  const base = process.env.SUPABASE_URL;
   const chave = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const resposta = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/atribuir_proximo`, {
+  if (!base || !chave) {
+    return res.status(500).json({ erro: "Configuração incompleta" });
+  }
+
+  const resposta = await fetch(`${base}/rest/v1/rpc/atribuir_proximo`, {
     method: "POST",
     headers: {
       apikey: chave,

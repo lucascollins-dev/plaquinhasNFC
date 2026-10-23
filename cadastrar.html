@@ -70,7 +70,7 @@
             link: document.getElementById("link").value
           })
         });
-        const dados = await resposta.json();
+        const dados = await resposta.json().catch(() => ({}));
 
         if (resposta.ok) {
           resultado.className = "ok";
@@ -79,7 +79,7 @@
           document.getElementById("link").value = "";
         } else {
           resultado.className = "erro";
-          resultado.textContent = dados.erro;
+          resultado.textContent = dados.erro || "Não foi possível cadastrar. Tente novamente.";
         }
       } catch (erro) {
         resultado.className = "erro";

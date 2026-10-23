@@ -1,4 +1,8 @@
 module.exports = async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ erro: "Método não permitido" });
+  }
+
   const senha = req.headers["x-senha"];
   if (!senha || senha !== process.env.CADASTRO_SENHA) {
     return res.status(401).json({ erro: "Senha incorreta" });
