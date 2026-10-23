@@ -132,10 +132,11 @@
     };
 
     let senha = null;
+    let cachedDados = null;
 
     function escapar(texto) {
       return String(texto).replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        "&": "&", "<": "<", ">": ">", '"': """, "'": "'"
       })[c]);
     }
 
@@ -165,7 +166,7 @@
         : "";
 
       return `
-        <div class="plaquinha">
+        <div class="plaquinha" data-link="${escapar(item.uniqueLink)}" data-fundo="${fundo}">
           ${nome}
           <span class="codigo--tela">${escapar(item.uniqueLink)}</span>
           <img class="fundo" src="${fundo}" alt="">
@@ -179,17 +180,17 @@
         `<p style="padding:16px;color:#b00">${escapar(texto)}</p>`;
     }
 
-    async function montar() {
+    async function carregarDados() {
       if (typeof QRCode === "undefined") {
         alert("A biblioteca do QR não carregou. Atualize a página com Ctrl+F5.");
-        return;
+        return null;
       }
 
       if (!senha) {
         senha = prompt("Senha de administrador:");
         if (!senha) {
           mostrarMensagem("Digite a senha para carregar as plaquinhas.");
-          return;
+          return null;
         }
       }
 
@@ -201,13 +202,15 @@
       if (!Array.isArray(dados)) {
         senha = null;
         mostrarMensagem("Senha incorreta ou erro ao carregar. Atualize a página e tente de novo.");
-        return;
+        return null;
       }
+      return dados;
+    }
 
+    function renderizar(dados) {
       const modo = document.getElementById("fundo").value;
       let html = "";
 
-      // Duas plaquinhas por folha: índices 0-1, 2-3, 4-5...
       for (let i = 0; i < dados.length; i += 2) {
         const esquerda = plaquinhaHTML(dados[i], fundoPara(modo, i));
         const direita = dados[i + 1]
@@ -219,7 +222,33 @@
       document.getElementById("paginas").innerHTML = html;
     }
 
-    document.getElementById("fundo").addEventListener("change", montar);
+    function atualizarQRs() {
+      document.querySelectorAll(".plaquinha").forEach(pl => {
+        const fundo = pl.dataset.fundo;
+        const pos = POSICAO[fundo];
+        const qr = pl.querySelector(".qr");
+        if (qr) {
+          qr.style.left = pos.left + "mm";
+          qr.style.top = pos.top + "mm";
+        }
+      });
+    }
+
+    async function montar() {
+      if (cachedDados) {
+        renderizar(cachedDados);
+        return;
+      }
+      const dados = await carregarDados();
+      if (dados) {
+        cachedDados = dados;
+        renderizar(dados);
+      }
+    }
+
+    document.getElementById("fundo").addEventListener("change", () => {
+      if (cachedDados) renderizar(cachedDados);
+    });
     montar();
 
     function toggleDebug() {
@@ -229,7 +258,7 @@
       const key = "fundo-" + fundo + ".png";
       POSICAO[key][prop] = Math.round((POSICAO[key][prop] + delta) * 10) / 10;
       document.getElementById("dbg" + fundo.charAt(0).toUpperCase() + fundo.slice(1) + prop.charAt(0).toUpperCase() + prop.slice(1)).textContent = POSICAO[key][prop];
-      montar();
+      atualizarQRs();
     }
     function copyPos() {
       const txt = JSON.stringify(POSICAO, null, 2);
