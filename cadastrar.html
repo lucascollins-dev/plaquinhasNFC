@@ -12,9 +12,23 @@
     #resultado { margin-top: 20px; font-size: 18px; padding: 16px; border-radius: 8px; }
     .ok { background: #e6f7ea; }
     .erro { background: #fde8e8; }
+    .voltar {
+      display: inline-block;
+      margin: 12px 0 8px;
+      font-size: 14px;
+      color: #444;
+      text-decoration: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 12px;
+    }
+    .voltar:hover { background: #f2f2f2; }
+    @media print { .voltar { display: none !important; } }
   </style>
 </head>
 <body>
+  <a class="voltar" href="painel.html">← Voltar ao painel</a>
+
   <h1>Cadastrar plaquinha</h1>
 
   <form id="form">
