@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciar plaquinhas</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; max-width: 800px; margin: 0 auto; }
+    .resumo { font-weight: 600; margin-bottom: 12px; }
+    .card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .card.livre { background: #f4f4f4; }
+    .codigo { font-family: monospace; font-weight: 600; }
+    .link { font-size: 13px; word-break: break-all; color: #444; }
+    button { font-size: 14px; padding: 6px 12px; margin-right: 6px; margin-top: 6px; }
+    form { display: none; margin-top: 10px; }
+    form.aberto { display: block; }
+    label { display: block; margin-top: 8px; font-size: 14px; }
+    input { width: 100%; font-size: 16px; padding: 8px; box-sizing: border-box; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Gerenciar plaquinhas</h1>
+  <div class="resumo" id="resumo"></div>
+  <div id="lista"></div>
+
+  <script>
+    let senha = null;
+    let dados = [];
+
+    function escapar(t) {
+      return String(t ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[c]);
+    }
+
+    async function api(metodo, corpo) {
+      const r = await fetch("/api/gerenciar", {
+        method: metodo,
+        headers: { "Content-Type": "application/json", "x-senha": senha },
+        body: corpo ? JSON.stringify(corpo) : undefined
+      });
+      return { ok: r.ok, dados: await r.json() };
+    }
+
+    async function carregar() {
+      if (!senha) senha = prompt("Senha de administrador:");
+      if (!senha) {
+        document.getElementById("resumo").textContent = "Digite a senha para continuar.";
+        return;
+      }
+
+      const r = await api("GET");
+      if (!r.ok) {
+        senha = null;
+        document.getElementById("resumo").textContent = r.dados.erro;
+        return;
+      }
+      dados = r.dados;
+      desenhar();
+    }
+
+    function desenhar() {
+      const livres = dados.filter((d) => !d.dynamic_link).length;
+      document.getElementById("resumo").textContent =
+        `${dados.length} plaquinhas, ${livres} livres`;
+
+      document.getElementById("lista").innerHTML = dados.map((d, i) => `
+        <div class="card ${d.dynamic_link ? "" : "livre"}">
+          <div class="codigo">${escapar(d.unique_link)}</div>
+          <div>${d.store_name ? escapar(d.store_name) : "<em>livre</em>"}</div>
+          <div class="link">${escapar(d.dynamic_link ?? "")}</div>
+          <button onclick="alternarForm(${i})">Editar</button>
+          ${d.dynamic_link ? `<button onclick="liberar(${i})">Liberar</button>` : ""}
+          <form id="form-${i}" onsubmit="salvar(event, ${i})">
+            <label>Nome do estabelecimento
+              <input name="storeName" value="${escapar(d.store_name ?? "")}" required>
+            </label>
+            <label>Link (Google ou Instagram)
+              <input name="link" type="url" value="${escapar(d.dynamic_link ?? "")}" required>
+            </label>
+            <button type="submit">Salvar</button>
+          </form>
+        </div>`).join("");
+    }
+
+    function alternarForm(i) {
+      document.getElementById(`form-${i}`).classList.toggle("aberto");
+    }
+
+    async function salvar(evento, i) {
+      evento.preventDefault();
+      const campos = evento.target;
+      const r = await api("POST", {
+        codigo: dados[i].unique_link,
+        acao: "editar",
+        storeName: campos.storeName.value,
+        link: campos.link.value
+      });
+      if (r.ok) carregar(); else alert(r.dados.erro);
+    }
+
+    async function liberar(i) {
+      const codigo = dados[i].unique_link;
+      if (!confirm(`Liberar ${codigo}? Faça isso só se a plaquinha voltou para você.`)) return;
+      const r = await api("POST", { codigo, acao: "liberar" });
+      if (r.ok) carregar(); else alert(r.dados.erro);
+    }
+
+    carregar();
+  </script>
+</body>
+</html>
