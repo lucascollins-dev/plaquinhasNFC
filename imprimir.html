@@ -78,7 +78,7 @@
     .debug-panel button { margin: 2px; padding: 4px 8px; }
 
     @media print {
-      .controles, .voltar, .store--name, .codigo--tela { display: none !important; }
+      .controles, .voltar, .store--name, .codigo--tela, .debug-panel { display: none !important; }
     }
   </style>
 </head>
@@ -226,8 +226,9 @@
       document.getElementById("debugPanel").classList.toggle("visible");
     }
     function adj(fundo, prop, delta) {
-      POSICAO[fundo + ".png"][prop] = Math.round((POSICAO[fundo + ".png"][prop] + delta) * 10) / 10;
-      document.getElementById("dbg" + fundo.charAt(0).toUpperCase() + fundo.slice(1) + prop.charAt(0).toUpperCase() + prop.slice(1)).textContent = POSICAO[fundo + ".png"][prop];
+      const key = "fundo-" + fundo + ".png";
+      POSICAO[key][prop] = Math.round((POSICAO[key][prop] + delta) * 10) / 10;
+      document.getElementById("dbg" + fundo.charAt(0).toUpperCase() + fundo.slice(1) + prop.charAt(0).toUpperCase() + prop.slice(1)).textContent = POSICAO[key][prop];
       montar();
     }
     function copyPos() {
