@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastrar plaquinha</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 480px; margin: 0 auto; }
+    label { display: block; margin-top: 14px; font-weight: 600; }
+    input { width: 100%; font-size: 18px; padding: 10px; box-sizing: border-box; margin-top: 6px; }
+    button { width: 100%; font-size: 18px; padding: 14px; margin-top: 20px; }
+    #resultado { margin-top: 20px; font-size: 18px; padding: 16px; border-radius: 8px; }
+    .ok { background: #e6f7ea; }
+    .erro { background: #fde8e8; }
+  </style>
+</head>
+<body>
+  <h1>Cadastrar plaquinha</h1>
+
+  <form id="form">
+    <label>Senha
+      <input id="senha" type="password" required>
+    </label>
+    <label>Nome do estabelecimento
+      <input id="nome" required>
+    </label>
+    <label>Link (Google ou Instagram)
+      <input id="link" type="url" required>
+    </label>
+    <button type="submit">Atribuir plaquinha</button>
+  </form>
+
+  <div id="resultado" hidden></div>
+
+  <script>
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const botao = e.target.querySelector("button");
+      botao.disabled = true;
+
+      const resultado = document.getElementById("resultado");
+      resultado.hidden = false;
+      resultado.className = "";
+      resultado.textContent = "Salvando...";
+
+      try {
+        const resposta = await fetch("/api/cadastrar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-senha": document.getElementById("senha").value
+          },
+          body: JSON.stringify({
+            storeName: document.getElementById("nome").value,
+            link: document.getElementById("link").value
+          })
+        });
+        const dados = await resposta.json();
+
+        if (resposta.ok) {
+          resultado.className = "ok";
+          resultado.textContent = `Pronto! Código ${dados.codigo}. Entregue a plaquinha correspondente.`;
+          document.getElementById("nome").value = "";
+          document.getElementById("link").value = "";
+        } else {
+          resultado.className = "erro";
+          resultado.textContent = dados.erro;
+        }
+      } catch (erro) {
+        resultado.className = "erro";
+        resultado.textContent = "Falha de conexão. Tente novamente.";
+      } finally {
+        botao.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

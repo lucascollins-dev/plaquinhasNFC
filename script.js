@@ -1,54 +1,23 @@
-// Endereço base: a própria página, seguida de ?c=
-// Ex.: http://127.0.0.1:5500/index.html?c=
-const BASE_URL = "https://plaquinhasnfc-ashy.vercel.app/index.html?c=";
+const mensagem = document.getElementById("mensagem");
+const codigo = new URLSearchParams(window.location.search).get("c");
 
-async function carregarDados() {
-  const resposta = await fetch("dados.json");
-  return await resposta.json();
-}
+async function redirecionar() {
+  try {
+    const resposta = await fetch(`/api/resolver?c=${encodeURIComponent(codigo)}`);
+    const dados = await resposta.json();
 
-async function iniciar() {
-  const dados = await carregarDados();
-  const codigo = new URLSearchParams(window.location.search).get("c");
-
-  // 1) Se veio um código na URL, faz o redirecionamento
-  if (codigo) {
-    let destino = null;
-
-    for (let i = 0; i < dados.length; i++) {
-      if (dados[i].uniqueLink === codigo) {
-        destino = dados[i].dynamicLink;
-        break;
-      }
-    }
-
-    if (destino) {
-      window.location.replace(destino);
+    if (dados.destino) {
+      window.location.replace(dados.destino);
     } else {
-      alert("Link não encontrado ou sem destino configurado.");
+      mensagem.textContent = "Link indisponível no momento.";
     }
-    return;
+  } catch (erro) {
+    mensagem.textContent = "Não foi possível abrir o link. Tente novamente.";
   }
-
-  // 2) Sem código: monta a tabela
-  const corpo = document.getElementById("corpo");
-  let html = "";
-
-  for (let i = 0; i < dados.length; i++) {
-    const uniqueLink = dados[i].uniqueLink;
-    const dynamicLink = dados[i].dynamicLink;
-
-    // O uniqueLink aponta para BASE_URL + uniqueLink
-    const celulaUnique = `<a href="${BASE_URL}${uniqueLink}">${uniqueLink}</a>`;
-
-    html += `
-      <tr>
-        <td>${celulaUnique}</td>
-        <td>${dynamicLink ?? "-"}</td>
-      </tr>`;
-  }
-
-  corpo.innerHTML = html;
 }
 
-iniciar();
+if (codigo) {
+  redirecionar();
+} else {
+  mensagem.textContent = "Aproxime o celular ou escaneie o QR code.";
+}

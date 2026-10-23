@@ -127,7 +127,7 @@
         return;
       }
 
-      const dados = await (await fetch("dados.json")).json();
+      const dados = await (await fetch("/api/codigos")).json();
       const modo = document.getElementById("fundo").value;
       let html = "";
 
