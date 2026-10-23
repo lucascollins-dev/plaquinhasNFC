@@ -43,21 +43,22 @@
       height: 26mm;
     }
 
-    /* Nome do estabelecimento: aparece só na tela, nunca na impressão */
-    .store--name {
+    /* Só aparecem na tela, nunca na impressão */
+    .store--name,
+    .codigo--tela {
       position: absolute;
-      top: 4mm;
-      left: 4mm;
       z-index: 999;
-      color: #ccc;
-      font-size: 16px;
       background-color: #000;
+      color: #fff;
+      font-size: 14px;
       padding: 2px 8px;
       border-radius: 8px;
     }
+    .store--name { top: 4mm; left: 4mm; }
+    .codigo--tela { bottom: 4mm; left: 4mm; font-family: monospace; }
 
     @media print {
-      .controles, .store--name { display: none !important; }
+      .controles, .store--name, .codigo--tela { display: none !important; }
     }
   </style>
 </head>
@@ -89,6 +90,14 @@
       "fundo-instagram.png": { left: 60.45, top: 76.93 }
     };
 
+    let senha = null;
+
+    function escapar(texto) {
+      return String(texto).replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[c]);
+    }
+
     function gerarQR(texto) {
       const temp = document.createElement("div");
       new QRCode(temp, {
@@ -110,15 +119,23 @@
     function plaquinhaHTML(item, fundo) {
       const pos = POSICAO[fundo];
       const imagem = gerarQR(BASE_URL + item.uniqueLink);
-      const nome = item.storeName ? item.storeName : "";
+      const nome = item.storeName
+        ? `<span class="store--name">${escapar(item.storeName)}</span>`
+        : "";
 
       return `
         <div class="plaquinha">
-          ${nome ? `<span class="store--name">${nome}</span>` : ""}
+          ${nome}
+          <span class="codigo--tela">${escapar(item.uniqueLink)}</span>
           <img class="fundo" src="${fundo}" alt="">
-          <img class="qr" src="${imagem}" alt="QR ${item.uniqueLink}"
+          <img class="qr" src="${imagem}" alt="QR ${escapar(item.uniqueLink)}"
                style="left:${pos.left}mm; top:${pos.top}mm;">
         </div>`;
+    }
+
+    function mostrarMensagem(texto) {
+      document.getElementById("paginas").innerHTML =
+        `<p style="padding:16px;color:#b00">${escapar(texto)}</p>`;
     }
 
     async function montar() {
@@ -127,7 +144,25 @@
         return;
       }
 
-      const dados = await (await fetch("/api/codigos")).json();
+      if (!senha) {
+        senha = prompt("Senha de administrador:");
+        if (!senha) {
+          mostrarMensagem("Digite a senha para carregar as plaquinhas.");
+          return;
+        }
+      }
+
+      const resposta = await fetch("/api/codigos", {
+        headers: { "x-senha": senha }
+      });
+      const dados = await resposta.json();
+
+      if (!Array.isArray(dados)) {
+        senha = null;
+        mostrarMensagem("Senha incorreta ou erro ao carregar. Atualize a página e tente de novo.");
+        return;
+      }
+
       const modo = document.getElementById("fundo").value;
       let html = "";
 
