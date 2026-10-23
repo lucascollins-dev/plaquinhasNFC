@@ -43,8 +43,21 @@
       height: 26mm;
     }
 
+    /* Nome do estabelecimento: aparece só na tela, nunca na impressão */
+    .store--name {
+      position: absolute;
+      top: 4mm;
+      left: 4mm;
+      z-index: 999;
+      color: #ccc;
+      font-size: 16px;
+      background-color: #000;
+      padding: 2px 8px;
+      border-radius: 8px;
+    }
+
     @media print {
-      .controles { display: none; }
+      .controles, .store--name { display: none !important; }
     }
   </style>
 </head>
@@ -97,8 +110,11 @@
     function plaquinhaHTML(item, fundo) {
       const pos = POSICAO[fundo];
       const imagem = gerarQR(BASE_URL + item.uniqueLink);
+      const nome = item.storeName ? item.storeName : "";
+
       return `
         <div class="plaquinha">
+          ${nome ? `<span class="store--name">${nome}</span>` : ""}
           <img class="fundo" src="${fundo}" alt="">
           <img class="qr" src="${imagem}" alt="QR ${item.uniqueLink}"
                style="left:${pos.left}mm; top:${pos.top}mm;">
