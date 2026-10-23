@@ -3,11 +3,7 @@ module.exports = async function handler(req, res) {
   const chave = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !chave) {
-    return res.status(500).json({
-      erro: "Variável de ambiente ausente",
-      supabaseUrlConfigurada: Boolean(url),
-      chaveServiceRoleConfigurada: Boolean(chave)
-    });
+    return res.status(500).json({ erro: "Configuração incompleta" });
   }
 
   try {
@@ -16,12 +12,12 @@ module.exports = async function handler(req, res) {
     });
 
     if (!resposta.ok) {
-      return res.status(500).json({ erro: "Supabase respondeu com erro", status: resposta.status });
+      return res.status(500).json({ erro: "Erro ao buscar códigos" });
     }
 
     const linhas = await resposta.json();
     return res.status(200).json(linhas.map((l) => ({ uniqueLink: l.unique_link })));
   } catch (erro) {
-    return res.status(500).json({ erro: "Falha ao conectar ao Supabase", detalhe: String(erro) });
+    return res.status(500).json({ erro: "Erro ao buscar códigos" });
   }
 };
