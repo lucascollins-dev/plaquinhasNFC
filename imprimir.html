@@ -69,6 +69,14 @@
     .store--name { top: 4mm; left: 4mm; }
     .codigo--tela { bottom: 4mm; left: 4mm; font-family: monospace; }
 
+    .debug-panel {
+      position: fixed; bottom: 16px; right: 16px; z-index: 1000;
+      background: rgba(0,0,0,0.8); color: #fff; padding: 12px; border-radius: 8px;
+      font-family: monospace; font-size: 12px; display: none;
+    }
+    .debug-panel.visible { display: block; }
+    .debug-panel button { margin: 2px; padding: 4px 8px; }
+
     @media print {
       .controles, .voltar, .store--name, .codigo--tela { display: none !important; }
     }
@@ -84,10 +92,29 @@
       <option value="instagram">Só Instagram</option>
     </select>
     <button onclick="window.print()">Imprimir</button>
+    <button onclick="toggleDebug()" style="margin-left: 8px;">Debug</button>
     <p>Duas plaquinhas por folha A4 paisagem, cada uma de 100 × 150 mm.</p>
   </div>
 
   <div id="paginas"></div>
+
+  <div class="debug-panel" id="debugPanel">
+    <div>Google: left <span id="dbgGoogleLeft">40.46</span> top <span id="dbgGoogleTop">84.44</span></div>
+    <div>Insta: left <span id="dbgInstaLeft">40.46</span> top <span id="dbgInstaTop">84.78</span></div>
+    <div>
+      <button onclick="adj('google','left',-0.1)">G←</button>
+      <button onclick="adj('google','left',0.1)">G→</button>
+      <button onclick="adj('google','top',-0.1)">G↑</button>
+      <button onclick="adj('google','top',0.1)">G↓</button>
+    </div>
+    <div>
+      <button onclick="adj('instagram','left',-0.1)">I←</button>
+      <button onclick="adj('instagram','left',0.1)">I→</button>
+      <button onclick="adj('instagram','top',-0.1)">I↑</button>
+      <button onclick="adj('instagram','top',0.1)">I↓</button>
+    </div>
+    <div><button onclick="copyPos()">Copiar posições</button></div>
+  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
@@ -194,6 +221,20 @@
 
     document.getElementById("fundo").addEventListener("change", montar);
     montar();
+
+    function toggleDebug() {
+      document.getElementById("debugPanel").classList.toggle("visible");
+    }
+    function adj(fundo, prop, delta) {
+      POSICAO[fundo + ".png"][prop] = Math.round((POSICAO[fundo + ".png"][prop] + delta) * 10) / 10;
+      document.getElementById("dbg" + fundo.charAt(0).toUpperCase() + fundo.slice(1) + prop.charAt(0).toUpperCase() + prop.slice(1)).textContent = POSICAO[fundo + ".png"][prop];
+      montar();
+    }
+    function copyPos() {
+      const txt = JSON.stringify(POSICAO, null, 2);
+      navigator.clipboard.writeText(txt);
+      alert("Copiado: " + txt);
+    }
   </script>
 </body>
 </html>
